@@ -42,7 +42,7 @@ class ArsenalWallpaperExtractor(object):
         os.remove(os.path.join(os.getcwd(), self.file))
 
     def _sort_by_picture_number(self, date_and_number_tuples):
-        return sorted(date_and_number_tuples, key=lambda pair: pair[1])
+        return sorted(date_and_number_tuples, key=lambda pair: pair[1], reverse=True)
     
     def _parse_html_file(self):
         with open(self.file, 'r') as f:
@@ -58,7 +58,7 @@ class ArsenalWallpaperExtractor(object):
             return
         picture_count = 0
         for date_and_number_tuple in date_and_number_tuples:
-            if date_and_number_tuples[1] > self.latest_picture_number:
+            if date_and_number_tuple[1] > self.latest_picture_number:
                 url = 'http://www.arsenal.com/assets/_files/desktops/%s/gun__%s_3.jpg' % (date_and_number_tuple)
                 logging.info('Fetching image from url %s', url)
                 picture_name = wget.download(url, bar=None)
