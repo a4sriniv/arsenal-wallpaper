@@ -23,7 +23,7 @@ class ArsenalWallpaperExtractor(object):
 
     def _get_latest_picture_number(self):
         files = os.listdir(self.wallpaper_directory)
-        logging.info('Current wallpaper files: ' + str(files))
+        logging.info('Current files in wallpaper directory: ' + str(files))
         picture_numbers = []
         for filename in files: # TODO: try and make this a list comprehension
             m = re.search(r'gun__(\d+)_3.jpg', filename)
@@ -41,22 +41,27 @@ class ArsenalWallpaperExtractor(object):
     def _delete_html_file(self):
         os.remove(os.path.join(os.getcwd(), self.file))
 
+    def _sort_by_picture_number(self, date_and_number_tuples):
+        return sorted(date_and_number_tuples, key=lambda pair: pair[1])
+    
     def _parse_html_file(self):
         with open(self.file, 'r') as f:
             file_contents = f.read()
-        regex = '/assets/_files/desktops/\w+_\d+/gun__(\d+)_3.jpg'
-        picture_numbers = re.findall(regex, file_contents)
-        picture_numbers.sort(reverse=True)
-        return picture_numbers
+        regex = '/assets/_files/desktops/(\w+_\d+)/gun__(\d+)_3.jpg'
+        date_and_number_tuples = self._sort_by_picture_number(re.findall(regex, file_contents))
+        return date_and_number_tuples
 
-    def _get_newer_pictures(self, picture_numbers):
-        if picture_numbers[0] <= self.latest_picture_number:
+
+    def _get_newer_pictures(self, date_and_number_tuples):
+        if date_and_number_tuples[0][1] <= self.latest_picture_number:
             print('No new pictures found!')
             return
         picture_count = 0
-        for picture_number in picture_numbers:
-            if picture_number > self.latest_picture_number:
-                picture_name = wget.download('http://www.arsenal.com/assets/_files/desktops/jul_14/gun__%s_3.jpg' % picture_number, bar=None)
+        for date_and_number_tuple in date_and_number_tuples:
+            if date_and_number_tuples[1] > self.latest_picture_number:
+                url = 'http://www.arsenal.com/assets/_files/desktops/%s/gun__%s_3.jpg' % (date_and_number_tuple)
+                logging.info('Fetching image from url %s', url)
+                picture_name = wget.download(url, bar=None)
                 logging.info('Copying picture %s to %s ....', picture_name, self.wallpaper_directory)
                 if self._not_current_directory():
                     shutil.copy(picture_name, self.wallpaper_directory)
