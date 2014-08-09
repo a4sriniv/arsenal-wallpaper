@@ -9,15 +9,18 @@ import logging
 
 
 class ArsenalWallpaperExtractor(object):
-    def __init__(self):
+    """Class to extract wallpapers from arsenal.com."""
+
+    def __init__(self, wallpaper_directory):
         self.file = ""
         self.arsenal_wallpapers_link = \
             "http://www.arsenal.com/fanzone/wallpapers"
-        self.wallpaper_directory = self._get_wallpaper_directory()
+        self.wallpaper_directory = self._get_wallpaper_directory(
+            wallpaper_directory)
         self.latest_picture_number = self._get_latest_picture_number()
 
-    def _get_wallpaper_directory(self):
-        directory = os.path.abspath(args.dir)
+    def _get_wallpaper_directory(self, wallpaper_dir):
+        directory = os.path.abspath(wallpaper_dir)
         if not os.path.isdir(directory):
             os.makedirs(directory)
         return directory
@@ -50,7 +53,7 @@ class ArsenalWallpaperExtractor(object):
     def _parse_html_file(self):
         with open(self.file, 'r') as f:
             file_contents = f.read()
-        regex = '/assets/_files/desktops/(\w+_\d+)/gun__(\d+)_3.jpg'
+        regex = r'/assets/_files/desktops/(\w+_\d+)/gun__(\d+)_3.jpg'
         date_and_number_tuples = self._sort_by_picture_number(
             re.findall(regex, file_contents))
         return date_and_number_tuples
@@ -75,7 +78,7 @@ class ArsenalWallpaperExtractor(object):
                 picture_count += 1
             else:
                 break
-        print('%d pictures downloaded!' % picture_count)
+        print '%d pictures downloaded!' % picture_count
 
     def _not_current_directory(self):
         return os.getcwd() != self.wallpaper_directory
@@ -87,11 +90,12 @@ class ArsenalWallpaperExtractor(object):
 
 
 def get_new_wallpapers():
-    extractor = ArsenalWallpaperExtractor()
+    extractor = ArsenalWallpaperExtractor(args.dir)
     extractor._extract_wallpapers()
 
 
 def main():
+    args = parser.parse_args()
     print 'Extracting wallpapers from arsenal.com .....'
     get_new_wallpapers()
 
@@ -104,7 +108,6 @@ parser = argparse.ArgumentParser(
     description='Tool to obtain new arsenal.com wallpapers')
 parser.add_argument('-d', '--dir', required=True,
                     help='Directory in which wallpapers will be downloaded to.')
-args = parser.parse_args()
 
 if __name__ == "__main__":
     main()
