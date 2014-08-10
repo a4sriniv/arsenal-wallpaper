@@ -1,5 +1,9 @@
 #!/usr/local/bin/python
+"""Script to update a directory with the latest arsenal.com wallpapers.
 
+Usage:
+    wallpaper.py --dir <path/to/directory>
+"""
 import argparse
 import os
 import wget
@@ -15,24 +19,23 @@ class ArsenalWallpaperExtractor(object):
         self.file = ""
         self.arsenal_wallpapers_link = \
             "http://www.arsenal.com/fanzone/wallpapers"
-        self.wallpaper_directory = self._get_wallpaper_directory(
+        self.wallpaper_directory = _check_wallpaper_directory(
             wallpaper_directory)
-        self.latest_picture_number = self._get_latest_picture_number()
+        self.latest_picture_number = self._get_latest_picture_number
 
-    def _get_wallpaper_directory(self, wallpaper_dir):
-        directory = os.path.abspath(wallpaper_dir)
-        if not os.path.isdir(directory):
-            os.makedirs(directory)
-        return directory
 
     def _get_latest_picture_number(self):
+        """Gets number of latest picture in user directory.
+
+        Returns: Picture number.
+        """
         files = os.listdir(self.wallpaper_directory)
         logging.info('Current files in wallpaper directory: ' + str(files))
         picture_numbers = []
         for filename in files:  # TODO: try and make this a list comprehension
-            m = re.search(r'gun__(\d+)_3.jpg', filename)
-            if m:
-                picture_numbers.append(m.group(1))
+            match = re.search(r'gun__(\d+)_3.jpg', filename)
+            if match:
+                picture_numbers.append(match.group(1))
         if not picture_numbers:
             return 0  # TODO: Still need to fix bugs for directory with no
             # new pictures
@@ -40,26 +43,42 @@ class ArsenalWallpaperExtractor(object):
         return picture_numbers[0]
 
     def _download_html_file(self):
+        """Downloads arsenal.com wallpaper page."""
         # TODO: check if file already exists
         self.file = wget.download(self.arsenal_wallpapers_link, bar=None)
 
     def _delete_html_file(self):
+        """Deletes local copy of arsenal.com html wallpaper page."""
         os.remove(os.path.join(os.getcwd(), self.file))
 
-    def _sort_by_picture_number(self, date_and_number_tuples):
-        return sorted(date_and_number_tuples, key=lambda pair: pair[1],
-                      reverse=True)
 
     def _parse_html_file(self):
-        with open(self.file, 'r') as f:
-            file_contents = f.read()
+        """Parse arsenal html page for wallpaper links.
+
+        Returns:
+            A list of (date,picture number) tuples representing wallpapers
+            found.
+        """
+        with open(self.file, 'r') as html_file:
+            file_contents = html_file.read()
         regex = r'/assets/_files/desktops/(\w+_\d+)/gun__(\d+)_3.jpg'
-        date_and_number_tuples = self._sort_by_picture_number(
+        date_and_number_tuples = _sort_by_picture_number(
             re.findall(regex, file_contents))
         return date_and_number_tuples
 
 
     def _get_newer_pictures(self, date_and_number_tuples):
+        """Downloads any new pictures from arsenal.com
+
+        This method checks if any wallpapers on the arsenal website are newer
+        than the images currently present in the wallpaper directory and
+        proceeds to download the pictures.
+
+        Args:
+            date_and_number_tuples: Each pair here represents a picture
+            present on the arsenal website. The list is assumed to be sorted
+            in reverse order by picture number.
+        """
         if date_and_number_tuples[0][1] <= self.latest_picture_number:
             print 'No new pictures found!'
             return
@@ -81,23 +100,53 @@ class ArsenalWallpaperExtractor(object):
         print '%d pictures downloaded!' % picture_count
 
     def _not_current_directory(self):
+        """Checks to see if user directory is the current directory."""
         return os.getcwd() != self.wallpaper_directory
 
-    def _extract_wallpapers(self):
+    def extract_wallpapers(self):
+        """Extracts wallpapers from arsenal.com and downloads them to the user
+        directory."""
         self._download_html_file()
         self._get_newer_pictures(self._parse_html_file())
         self._delete_html_file()
 
 
-def get_new_wallpapers():
-    extractor = ArsenalWallpaperExtractor(args.dir)
-    extractor._extract_wallpapers()
+def _check_wallpaper_directory(wallpaper_dir):
+    """Checks if wallpaper_dir exists and creates dir if necessary.
+
+    Args:
+        wallpaper_dir: Directory to check/create.
+    Returns:
+        Absolute directory path.
+    """
+    directory = os.path.abspath(wallpaper_dir)
+    if not os.path.isdir(directory):
+        os.makedirs(directory)
+    return directory
+
+
+def _sort_by_picture_number(date_and_number_tuples):
+    """Sorts (date, number) tuples by the number field in reverse order.
+
+    Args:
+        date_and_number_tuples: List of tuples.
+    Returns:
+        Sorted list.
+    """
+    return sorted(date_and_number_tuples, key=lambda pair: pair[1],
+                  reverse=True)
+
+
+def get_new_wallpapers(directory):
+    """Update directory with any new wallpapers from arsenal.com."""
+    extractor = ArsenalWallpaperExtractor(directory)
+    extractor.extract_wallpapers()
 
 
 def main():
     args = parser.parse_args()
     print 'Extracting wallpapers from arsenal.com .....'
-    get_new_wallpapers()
+    get_new_wallpapers(args.dir)
 
 # set logging level and log file
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
