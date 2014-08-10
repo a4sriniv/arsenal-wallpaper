@@ -21,13 +21,13 @@ class ArsenalWallpaperExtractor(object):
             "http://www.arsenal.com/fanzone/wallpapers"
         self.wallpaper_directory = _check_wallpaper_directory(
             wallpaper_directory)
-        self.latest_picture_number = self._get_latest_picture_number
+        self.latest_picture_number = self._get_latest_picture_number()
 
 
     def _get_latest_picture_number(self):
         """Gets number of latest picture in user directory.
 
-        Returns: Picture number.
+        Returns: Picture number (string).
         """
         files = os.listdir(self.wallpaper_directory)
         logging.info('Current files in wallpaper directory: ' + str(files))
@@ -37,10 +37,10 @@ class ArsenalWallpaperExtractor(object):
             if match:
                 picture_numbers.append(match.group(1))
         if not picture_numbers:
-            return 0  # TODO: Still need to fix bugs for directory with no
+            return "0"  # TODO: Still need to fix bugs for directory with no
             # new pictures
         picture_numbers.sort(reverse=True)
-        return picture_numbers[0]
+        return str(picture_numbers[0])
 
     def _download_html_file(self):
         """Downloads arsenal.com wallpaper page."""
@@ -80,7 +80,7 @@ class ArsenalWallpaperExtractor(object):
             in reverse order by picture number.
         """
         if date_and_number_tuples[0][1] <= self.latest_picture_number:
-            print 'No new pictures found!'
+            print('No new pictures found!')
             return
         picture_count = 0
         for date_and_number_tuple in date_and_number_tuples:
@@ -97,7 +97,7 @@ class ArsenalWallpaperExtractor(object):
                 picture_count += 1
             else:
                 break
-        print '%d pictures downloaded!' % picture_count
+        print('%d pictures downloaded!' % picture_count)
 
     def _not_current_directory(self):
         """Checks to see if user directory is the current directory."""
@@ -133,7 +133,7 @@ def _sort_by_picture_number(date_and_number_tuples):
     Returns:
         Sorted list.
     """
-    return sorted(date_and_number_tuples, key=lambda pair: pair[1],
+    return sorted(date_and_number_tuples, key=lambda pair: int(pair[1]),
                   reverse=True)
 
 
@@ -145,7 +145,7 @@ def get_new_wallpapers(directory):
 
 def main():
     args = parser.parse_args()
-    print 'Extracting wallpapers from arsenal.com .....'
+    print('Extracting wallpapers from arsenal.com .....')
     get_new_wallpapers(args.dir)
 
 # set logging level and log file
