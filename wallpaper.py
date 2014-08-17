@@ -107,7 +107,10 @@ class ArsenalWallpaperExtractor(object):
         """Extracts wallpapers from arsenal.com and downloads them to the user
         directory."""
         self._download_html_file()
-        self._get_newer_pictures(self._parse_html_file())
+        try:
+            self._get_newer_pictures(self._parse_html_file())
+        except Exception as e:
+            logging.error("%d: %s", (e.message))
         self._delete_html_file()
 
 
