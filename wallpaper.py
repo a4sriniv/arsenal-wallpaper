@@ -59,7 +59,8 @@ class ArsenalWallpaperExtractor(object):
             A list of (date,picture number) tuples representing wallpapers
             found.
         """
-        with open(self.file, 'r') as html_file:
+        encoding = 'utf-8'
+        with open(self.file, 'r', encoding=encoding) as html_file:
             file_contents = html_file.read()
         regex = r'/assets/_files/desktops/(\w+_\d+)/gun__(\d+)_3.jpg'
         date_and_number_tuples = _sort_by_picture_number(
@@ -109,8 +110,8 @@ class ArsenalWallpaperExtractor(object):
         self._download_html_file()
         try:
             self._get_newer_pictures(self._parse_html_file())
-        except Exception as e:
-            logging.error("%d: %s", (e.message))
+        except Exception as err:
+            logging.error("%d: %s", str(err))
         self._delete_html_file()
 
 
